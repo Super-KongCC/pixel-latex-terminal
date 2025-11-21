@@ -1,5 +1,14 @@
 
+
 import { LatexSymbol, TutorialLevel, Snippet } from './types';
+
+export const ASCII_SCOTT = `
+  ██████  ██████  ██████  ████████ ████████
+ ██       ██      ██    ██    ██       ██   
+ ██████   ██      ██    ██    ██       ██   
+      ██  ██      ██    ██    ██       ██   
+ ██████   ██████  ██████      ██       ██   
+`;
 
 export const LATEX_SYMBOLS: LatexSymbol[] = [
   {
@@ -385,6 +394,9 @@ COMMANDS:
   clear          Clear terminal history
   game           Start Tutorial Game
   font <1-5>     Set font size
+  switch -mac    Switch to MacOS Style
+  switch -win    Switch to Windows 98 Style
+  switch -cyber  Switch to Cyberpunk Style
   matrix(R,C)    Generate a matrix with R rows and C columns
                  Example: matrix(2,2)
   -h             Show this help
@@ -395,5 +407,6 @@ COMMANDS:
 EXAMPLES:
   $ \\begin{align*} x &= 1 \\\\ y &= 2 \\end{align*}
   $ matrix(3,3)
+  $ switch -win
   $ \\int_{0}^{\\infty} e^{-x^2} dx -download
 `;

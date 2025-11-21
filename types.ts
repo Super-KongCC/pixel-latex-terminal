@@ -6,7 +6,8 @@ export enum OutputType {
   ERROR = 'ERROR',
   HELP = 'HELP',
   IMAGE = 'IMAGE',
-  GAME = 'GAME'
+  GAME = 'GAME',
+  ASCII = 'ASCII'
 }
 
 export interface TerminalLine {
@@ -60,3 +61,4 @@ export interface Snippet {
 
 export type Theme = 'dark' | 'light';
 export type Language = 'en' | 'zh';
+export type TerminalStyle = 'MAC' | 'WIN98' | 'CYBER';

@@ -1,42 +1,20 @@
-# <div id="english-version"></div> 📟 Pixel-Terminal LaTeX Renderer
-
-A retro **pixel-style terminal** that renders LaTeX formulas interactively.  
-Type LaTeX code in the terminal, and it instantly generates a rendered formula image — downloadable or copyable.
-
 <div align="center">
-<img width="377" height="302" alt="image" src="https://github.com/user-attachments/assets/f53a9fec-0d45-4b06-9c80-aedeea41d46e" />
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-[Website of pixel-latex-terminal](https://maths-terminal-pixel.vercel.app/)
----
+# Run and deploy your AI Studio app
 
-## 🚀 Features
+This contains everything you need to run your app locally.
 
-### ✔️ Instant LaTeX Rendering  
-Enter LaTeX → get image immediately.
+View your app in AI Studio: https://ai.studio/apps/drive/1cD_WaY9cRpu97IeZWxK2Yo96pRCiRBZp
 
-### ✔️ Pixel-Art Terminal UI  
-Vintage CRT terminal aesthetics.
+## Run Locally
 
-### ✔️ Built-in Commands
-
-| Command | Description |
-|--------|-------------|
-| `-h` | Show help menu |
-| `-hn` | Open GUI preset formulas |
-| `game` | Enter beginner training mode |
-| `exit` | Quit game mode |
-
-### ✔️ GUI Preset Selector  
-Click the Scott robot or run `-hn` to open the graphical menu with:
+**Prerequisites:**  Node.js
 
 
-### ✔️ Game Mode  
-A simple interactive tutorial for LaTeX beginners.
-<img width="1683" height="1131" alt="image" src="https://github.com/user-attachments/assets/153213c3-aa7f-42e4-bfe3-f8e34738e7a6" />
-
-
-## 🧪 Example
-
-```text
-> \int_0^1 x^2 dx
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

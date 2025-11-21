@@ -1,18 +1,21 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import TerminalInput from './TerminalInput';
 import RenderedItem from './RenderedItem';
 import HelpOverlay from './HelpOverlay';
 import LivePreview from './LivePreview';
-import { TerminalLine, OutputType, ParsedCommand, Theme, Language, TutorialLevel } from '../types';
-import { HELP_TEXT, UI_TEXT, TUTORIAL_LEVELS, GAME_TEXT } from '../constants';
+import { TerminalLine, OutputType, ParsedCommand, Theme, Language, TutorialLevel, TerminalStyle } from '../types';
+import { HELP_TEXT, UI_TEXT, TUTORIAL_LEVELS, GAME_TEXT, ASCII_SCOTT } from '../constants';
 
 interface TerminalProps {
   theme: Theme;
   lang: Language;
+  terminalStyle: TerminalStyle;
+  onStyleChange: (style: TerminalStyle) => void;
 }
 
-const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
+const Terminal: React.FC<TerminalProps> = ({ theme, lang, terminalStyle, onStyleChange }) => {
   const [history, setHistory] = useState<TerminalLine[]>([]);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
@@ -34,6 +37,20 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
 
   const t = UI_TEXT[lang];
   const gt = GAME_TEXT[lang];
+
+  // Initialization Effect: Show Scott ASCII
+  useEffect(() => {
+    // Only run once on mount if history is empty
+    if (history.length === 0) {
+        setHistory([{
+            id: 'init-ascii',
+            type: OutputType.TEXT,
+            content: ASCII_SCOTT,
+            timestamp: Date.now(),
+            command: ''
+        }]);
+    }
+  }, []); // Empty dependency array ensures it runs once
 
   // Auto-scroll to bottom of terminal ONLY
   useEffect(() => {
@@ -209,7 +226,13 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
 
     // 0. Handle Clear
     if (parsed.content.toLowerCase() === 'clear' || parsed.content.toLowerCase() === 'cls') {
-      setHistory([]);
+      setHistory([{
+            id: 'init-ascii',
+            type: OutputType.TEXT,
+            content: ASCII_SCOTT,
+            timestamp: Date.now(),
+            command: ''
+        }]);
       setInput('');
       return;
     }
@@ -251,8 +274,21 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
         }
     }
 
+    // 0.3 Handle Switch Style Command
+    const switchMatch = parsed.content.match(/^switch\s+-(mac|win|cyber)$/i);
+    if (switchMatch) {
+        const target = switchMatch[1].toUpperCase();
+        let style: TerminalStyle = 'MAC';
+        if (target === 'WIN') style = 'WIN98';
+        if (target === 'CYBER') style = 'CYBER';
+        
+        pushMsg(`System switching to ${style}...`, OutputType.TEXT);
+        onStyleChange(style);
+        setInput('');
+        return;
+    }
 
-    // 0.3 Handle Game Start
+    // 0.4 Handle Game Start
     if (parsed.content.toLowerCase() === 'game') {
         setInput('');
         startGame();
@@ -359,8 +395,6 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
   };
 
   const handleSymbolSelect = (code: string) => {
-    // If the code looks like a block (starts with \begin), we might want to replace input if it's empty, 
-    // or append if not. But typical behavior is insert at cursor.
     
     if (inputRef.current) {
       const start = inputRef.current.selectionStart;
@@ -371,9 +405,6 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
       
       setTimeout(() => {
         inputRef.current?.focus();
-        // Try to be smart about cursor position (e.g. inside braces)
-        // Very basic heuristic: if code ends with {}, put cursor inside
-        // if matrix, leave cursor at end for now or find first &
         let newPos = start + code.length;
         if (code.endsWith('{}')) newPos -= 1;
         else if (code.endsWith('{  }')) newPos -= 2;
@@ -386,8 +417,18 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
     }
   };
 
-  // Theme Classes
-  const subTextClass = theme === 'dark' ? 'text-gray-500' : 'text-gray-400';
+  // Theme Classes for subtext
+  const getSubtextColor = () => {
+    if (terminalStyle === 'WIN98' && theme === 'dark') return 'text-gray-300';
+    if (terminalStyle === 'CYBER') return theme === 'dark' ? 'text-cyan-600' : 'text-violet-400';
+    return theme === 'dark' ? 'text-gray-500' : 'text-gray-400';
+  };
+
+  const getHighlightColor = () => {
+     if (terminalStyle === 'WIN98' && theme === 'dark') return 'text-white';
+     if (terminalStyle === 'CYBER') return theme === 'dark' ? 'text-cyan-400' : 'text-violet-600';
+     return theme === 'dark' ? 'text-green-400' : 'text-green-600';
+  };
 
   return (
     <div className="w-full h-full flex flex-col font-[VT323] relative z-10">
@@ -396,21 +437,28 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
       <div ref={containerRef} className="flex-1 overflow-y-auto custom-scrollbar p-4 pb-2">
         
         {/* Welcome Message */}
-        {history.length === 0 && !gameMode && (
-          <div className={`mb-8 text-xl ${subTextClass}`}>
+        {history.length === 1 && history[0].type === OutputType.TEXT && !gameMode && (
+          <div className={`mb-8 text-xl ${getSubtextColor()}`}>
             <p>{t.lastLogin}: {new Date().toLocaleString()} on ttys001</p>
-            <p className={`mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{t.welcome}</p>
+            <p className={`mt-2 ${getHighlightColor()}`}>{t.welcome}</p>
             <p>{t.helpCmd}</p>
             <p>{t.symbolCmd}</p>
-            <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>{t.navHint}</p>
-            <p className={`mt-2 text-yellow-500 animate-pulse`}>Try typing 'matrix(3,3)' or 'game'!</p>
+            <p className={`mt-2 text-sm opacity-80`}>{t.navHint}</p>
+            <p className={`mt-2 ${terminalStyle === 'CYBER' ? 'text-pink-500' : 'text-yellow-500'} animate-pulse`}>Try typing 'matrix(3,3)' or 'switch -win'!</p>
           </div>
         )}
 
         {/* History */}
         <div className="flex flex-col">
           {history.map(line => (
-            <RenderedItem key={line.id} line={line} theme={theme} lang={lang} fontSize={fontSize} />
+            <RenderedItem 
+                key={line.id} 
+                line={line} 
+                theme={theme} 
+                lang={lang} 
+                fontSize={fontSize} 
+                terminalStyle={terminalStyle}
+            />
           ))}
         </div>
 
@@ -424,6 +472,7 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
               inputRef={inputRef}
               theme={theme}
               fontSize={fontSize}
+              terminalStyle={terminalStyle}
             />
         </div>
 
@@ -437,6 +486,7 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
         theme={theme} 
         lang={lang} 
         moodOverride={gameMode ? 'TEACHER' : null}
+        terminalStyle={terminalStyle}
       />
 
       {/* Modals */}

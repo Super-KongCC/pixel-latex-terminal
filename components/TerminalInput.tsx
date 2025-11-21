@@ -1,6 +1,6 @@
 
 import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
-import { Theme, Snippet } from '../types';
+import { Theme, Snippet, TerminalStyle } from '../types';
 import { EDITOR_SNIPPETS } from '../constants';
 
 interface TerminalInputProps {
@@ -11,6 +11,7 @@ interface TerminalInputProps {
   inputRef: React.RefObject<HTMLTextAreaElement>;
   theme?: Theme;
   fontSize: number;
+  terminalStyle?: TerminalStyle;
 }
 
 const getFontSizeClass = (size: number) => {
@@ -24,7 +25,7 @@ const getFontSizeClass = (size: number) => {
     }
 };
 
-const TerminalInput: React.FC<TerminalInputProps> = ({ value, onChange, onSubmit, onHistoryNav, inputRef, theme = 'dark', fontSize }) => {
+const TerminalInput: React.FC<TerminalInputProps> = ({ value, onChange, onSubmit, onHistoryNav, inputRef, theme = 'dark', fontSize, terminalStyle = 'MAC' }) => {
   const [matchedSnippet, setMatchedSnippet] = useState<Snippet | null>(null);
   const fontClass = getFontSizeClass(fontSize);
   
@@ -44,7 +45,6 @@ const TerminalInput: React.FC<TerminalInputProps> = ({ value, onChange, onSubmit
     }
 
     // We check if the input ENDS with a trigger. 
-    // We reverse sort triggers by length to match longest specific trigger first (e.g. \begin vs \beg)
     const activeSnippet = EDITOR_SNIPPETS
       .sort((a, b) => b.trigger.length - a.trigger.length)
       .find(s => value.endsWith(s.trigger));
@@ -104,10 +104,22 @@ const TerminalInput: React.FC<TerminalInputProps> = ({ value, onChange, onSubmit
     }
   };
 
+  const getPromptColor = () => {
+     if (terminalStyle === 'WIN98' && theme === 'dark') return 'text-white';
+     if (terminalStyle === 'CYBER') return theme === 'dark' ? 'text-pink-500' : 'text-pink-600';
+     return theme === 'dark' ? 'text-green-500' : 'text-green-700';
+  };
+
+  const getInputColor = () => {
+     if (terminalStyle === 'WIN98' && theme === 'dark') return 'text-white caret-white';
+     if (terminalStyle === 'CYBER') return theme === 'dark' ? 'text-cyan-300 caret-pink-500' : 'text-violet-800 caret-violet-600';
+     return theme === 'dark' ? 'text-gray-200 caret-green-500' : 'text-gray-800 caret-green-700';
+  };
+
   return (
     <div className={`flex flex-col w-full mt-4 ${fontClass}`}>
         <div className="flex items-start gap-2 w-full relative group">
-          <span className={`font-bold font-mono pt-[2px] shrink-0 select-none glow-text ${theme === 'dark' ? 'text-green-500' : 'text-green-700'}`}>
+          <span className={`font-bold font-mono pt-[2px] shrink-0 select-none glow-text ${getPromptColor()}`}>
             ➜ ~ $
           </span>
           
@@ -117,8 +129,7 @@ const TerminalInput: React.FC<TerminalInputProps> = ({ value, onChange, onSubmit
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              className={`w-full bg-transparent font-mono outline-none resize-none overflow-hidden min-h-[24px] leading-relaxed block relative z-10
-                ${theme === 'dark' ? 'text-gray-200 caret-green-500' : 'text-gray-800 caret-green-700'}`}
+              className={`w-full bg-transparent font-mono outline-none resize-none overflow-hidden min-h-[24px] leading-relaxed block relative z-10 ${getInputColor()}`}
               spellCheck={false}
               autoFocus
             />

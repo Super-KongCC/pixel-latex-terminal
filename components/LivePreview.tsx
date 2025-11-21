@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as katexLib from 'katex';
-import { Theme, Language } from '../types';
+import { Theme, Language, TerminalStyle } from '../types';
 import { UI_TEXT } from '../constants';
 
 const katex = (katexLib as any).default || katexLib;
@@ -12,11 +12,12 @@ interface LivePreviewProps {
   theme: Theme;
   lang: Language;
   moodOverride?: 'TEACHER' | null;
+  terminalStyle?: TerminalStyle;
 }
 
 type RobotMood = 'NEUTRAL' | 'HAPPY' | 'CONFUSED' | 'CHEEKY' | 'SLEEPY' | 'THINKING' | 'TEACHER';
 
-const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, lang, moodOverride }) => {
+const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, lang, moodOverride, terminalStyle = 'MAC' }) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [snarkyMsg, setSnarkyMsg] = useState<string>('');
   const [mood, setMood] = useState<RobotMood>('NEUTRAL');
@@ -61,11 +62,17 @@ const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, l
             output: 'html',
           });
           previewRef.current.innerHTML = html;
-          previewRef.current.style.color = theme === 'dark' ? '#e2e8f0' : '#1f2937';
+          
+          // Set color specifically for preview box
+          let textColor = theme === 'dark' ? '#e2e8f0' : '#1f2937';
+          if (terminalStyle === 'WIN98' && theme === 'dark') textColor = '#ffffff';
+          if (terminalStyle === 'CYBER') textColor = theme === 'dark' ? '#22d3ee' : '#4c1d95';
+
+          previewRef.current.style.color = textColor;
           if (!moodOverride) setMood('HAPPY');
         } catch (e: any) {
           const errMsg = e.message || "";
-          // Smart error detection: if it's just an incomplete command/environment, show 'THINKING' instead of 'CONFUSED'
+          // Smart error detection
           const isIncomplete = errMsg.includes("Unexpected end of input") || 
                                errMsg.includes("Expected '}'") ||
                                latex.endsWith("\\") ||
@@ -96,7 +103,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, l
     previewRef.current.innerHTML = `<span class="${idleColor} italic text-sm">${UI_TEXT[lang].waiting}</span>`;
     if (mood !== 'CHEEKY' && !moodOverride) setMood('NEUTRAL');
     
-  }, [latex, snarkyMsg, mood, theme, lang, moodOverride]);
+  }, [latex, snarkyMsg, mood, theme, lang, moodOverride, terminalStyle]);
 
   // SVG Faces
   const getFaceContent = () => {
@@ -166,7 +173,21 @@ const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, l
   }
   
   const getRobotColor = () => {
-    // Dark Mode Colors
+    // CYBERPUNK SPECIAL
+    if (terminalStyle === 'CYBER') {
+        if (theme === 'dark') {
+            return 'text-cyan-400 border-cyan-500/80 bg-cyan-900/20 shadow-[0_0_10px_rgba(34,211,238,0.3)]';
+        } else {
+            return 'text-violet-600 border-violet-500/50 bg-violet-100';
+        }
+    }
+
+    // WIN98 SPECIAL
+    if (terminalStyle === 'WIN98' && theme === 'dark') {
+        return 'text-white border-white bg-transparent';
+    }
+
+    // DEFAULT MAC/NORMAL
     if (theme === 'dark') {
         switch(mood) {
         case 'CONFUSED': return 'text-red-400 border-red-500/50 bg-red-900/20';
@@ -177,7 +198,6 @@ const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, l
         default: return 'text-green-400 border-green-500/30 bg-green-900/20';
         }
     } 
-    // Light Mode Colors
     else {
         switch(mood) {
         case 'CONFUSED': return 'text-red-600 border-red-400 bg-red-100';
@@ -190,14 +210,34 @@ const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, l
     }
   }
 
+  const getBoxStyles = () => {
+      // Cyberpunk Box
+      if (terminalStyle === 'CYBER') {
+          return theme === 'dark' 
+            ? 'bg-black/40 border-cyan-500/30 text-cyan-100 shadow-[inset_0_0_20px_rgba(6,182,212,0.1)]'
+            : 'bg-white/50 border-violet-400 text-violet-900';
+      }
+      // Win98 Dark Box (BSOD context)
+      if (terminalStyle === 'WIN98' && theme === 'dark') {
+          return 'bg-black/20 border-white/30 text-white';
+      }
+      // Default
+      return theme === 'dark' 
+          ? (mood === 'CONFUSED' ? 'bg-black/50 border-red-900/50' : 'bg-black/50 border-gray-700') 
+          : (mood === 'CONFUSED' ? 'bg-gray-50 border-red-300' : 'bg-gray-50 border-gray-300');
+  };
+
   return (
-    <div className={`w-full border-t-2 p-4 flex items-center gap-4 animate-in slide-in-from-bottom duration-300 transition-colors
-        ${theme === 'dark' ? 'bg-gray-900/95 border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]' : 'bg-white/95 border-gray-300 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]'}`}>
+    <div className={`w-full border-t-2 p-4 flex items-center gap-4 animate-in slide-in-from-bottom duration-300 transition-colors z-20
+        ${theme === 'dark' ? 'bg-gray-900/95 border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]' : 'bg-white/95 border-gray-300 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]'}
+        ${terminalStyle === 'WIN98' ? (theme === 'dark' ? '!bg-[#0000AA] !border-white !text-white' : '!bg-[#c0c0c0] !border-t-white !border-gray-400') : ''}
+        ${terminalStyle === 'CYBER' ? (theme === 'dark' ? '!bg-[#050510]/95 !border-cyan-500/30' : '!bg-slate-50/90 !border-violet-500/30') : ''}
+        `}>
       
       {/* Pixel Robot SVG Container */}
       <div 
         onClick={onRobotClick}
-        className={`shrink-0 w-14 h-14 rounded-xl flex items-center justify-center border cursor-pointer transition-all group relative ${getRobotColor()} hover:scale-105 hover:shadow-lg`}
+        className={`shrink-0 w-14 h-14 rounded-xl flex items-center justify-center border cursor-pointer transition-all group relative hover:scale-105 hover:shadow-lg ${getRobotColor()}`}
         title="I am Scott! Click me for symbols."
       >
          {/* Tooltip */}
@@ -230,7 +270,10 @@ const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, l
 
       {/* Speech Bubble / Preview Area */}
       <div className="flex-1 min-w-0 flex flex-col h-full justify-center">
-        <div className="text-[10px] text-gray-500 font-mono mb-1 tracking-widest uppercase flex justify-between items-center">
+        <div className={`text-[10px] font-mono mb-1 tracking-widest uppercase flex justify-between items-center
+             ${terminalStyle === 'WIN98' && theme === 'dark' ? 'text-white opacity-70' : 'text-gray-500'}
+             ${terminalStyle === 'CYBER' ? (theme === 'dark' ? '!text-cyan-600' : '!text-violet-400') : ''}
+            `}>
             <span className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${mood === 'NEUTRAL' ? 'bg-gray-500' : mood === 'CHEEKY' ? 'bg-yellow-500 animate-pulse' : mood === 'CONFUSED' ? 'bg-red-500' : mood === 'THINKING' ? 'bg-blue-500 animate-pulse' : 'bg-green-500 animate-pulse'}`}></span>
               SCOTT.EXE
@@ -238,12 +281,10 @@ const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, l
             {snarkyMsg && !moodOverride && <span className="text-yellow-500/50 animate-pulse">● BORED</span>}
             {moodOverride === 'TEACHER' && <span className="text-amber-500 font-bold">● TEACHING MODE</span>}
         </div>
-        {/* CHANGED: Added whitespace-pre-wrap and break-words to ensure long text wraps properly */}
+        
         <div className={`border rounded px-4 py-4 overflow-x-auto custom-scrollbar min-h-[44px] transition-colors whitespace-pre-wrap break-words
-            ${theme === 'dark' 
-                ? (mood === 'CONFUSED' ? 'bg-black/50 border-red-900/50' : 'bg-black/50 border-gray-700') 
-                : (mood === 'CONFUSED' ? 'bg-gray-50 border-red-300' : 'bg-gray-50 border-gray-300')
-            }`}>
+            ${getBoxStyles()}
+            `}>
            <div ref={previewRef} className="text-lg" />
         </div>
       </div>
