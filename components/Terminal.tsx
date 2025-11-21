@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import TerminalInput from './TerminalInput';
 import RenderedItem from './RenderedItem';
@@ -171,6 +172,18 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
      setInput('');
   };
 
+  const generateMatrixLatex = (rows: number, cols: number) => {
+    let str = "\\begin{bmatrix}\n";
+    for(let r=0; r<rows; r++) {
+      str += "  ";
+      for(let c=0; c<cols; c++) {
+        str += c < cols - 1 ? " & " : "";
+      }
+      str += r < rows - 1 ? " \\\\\n" : "\n";
+    }
+    str += "\\end{bmatrix}";
+    return str;
+  };
 
   const processCommand = async () => {
     // ALLOW empty inputs to act like "Enter" in a terminal
@@ -202,10 +215,7 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
     }
 
     // 0.1 Handle Font Size Command
-    // Regex matches: font 1, font <1>, font=1, font<1>, case insensitive
-    // Groups: 1=size
     const fontMatch = parsed.content.match(/^font\s*[=<]?\s*(\d+)\s*[>]?$/i);
-    
     if (fontMatch) {
         const size = parseInt(fontMatch[1]);
         if (!isNaN(size) && size >= 1 && size <= 5) {
@@ -218,14 +228,31 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
             setInput('');
             return;
         }
-    } else if (parsed.content.toLowerCase().startsWith('font ')) {
-        // If it starts with "font " but didn't match the regex, it might be invalid syntax
-        pushMsg(`Usage: font <1-5>`, OutputType.ERROR);
-        setInput('');
-        return;
     }
 
-    // 0.2 Handle Game Start
+    // 0.2 Handle Matrix Command: matrix(2,3)
+    const matrixMatch = parsed.content.match(/^matrix\((\d+),\s*(\d+)\)$/i);
+    if (matrixMatch) {
+        const rows = parseInt(matrixMatch[1]);
+        const cols = parseInt(matrixMatch[2]);
+        if (rows > 0 && cols > 0 && rows <= 20 && cols <= 20) {
+            const matrixCode = generateMatrixLatex(rows, cols);
+            setInput(matrixCode); // Replace input for editing
+            // Optionally focus
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                    // Set cursor inside first gap if possible, simplistic approach:
+                    const firstGap = matrixCode.indexOf("&");
+                    if(firstGap > -1) inputRef.current.setSelectionRange(firstGap, firstGap);
+                }
+            }, 10);
+            return; // Do not process as standard latex output yet
+        }
+    }
+
+
+    // 0.3 Handle Game Start
     if (parsed.content.toLowerCase() === 'game') {
         setInput('');
         startGame();
@@ -252,14 +279,13 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
       return;
     }
 
-    // 3. Handle Empty Input (Just New Line)
-    // Moved AFTER help checks because commands like "-h" result in empty content.
+    // 3. Handle Empty Input
     if (!parsed.content) {
         setHistory(prev => [...prev, {
             id: newLineId,
             type: OutputType.TEXT,
-            content: "", // Empty content triggers "Empty Line" rendering
-            command: "", // No command
+            content: "",
+            command: "",
             timestamp: Date.now()
         }]);
         setInput('');
@@ -333,6 +359,9 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
   };
 
   const handleSymbolSelect = (code: string) => {
+    // If the code looks like a block (starts with \begin), we might want to replace input if it's empty, 
+    // or append if not. But typical behavior is insert at cursor.
+    
     if (inputRef.current) {
       const start = inputRef.current.selectionStart;
       const end = inputRef.current.selectionEnd;
@@ -342,7 +371,13 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
       
       setTimeout(() => {
         inputRef.current?.focus();
-        const newPos = start + code.length;
+        // Try to be smart about cursor position (e.g. inside braces)
+        // Very basic heuristic: if code ends with {}, put cursor inside
+        // if matrix, leave cursor at end for now or find first &
+        let newPos = start + code.length;
+        if (code.endsWith('{}')) newPos -= 1;
+        else if (code.endsWith('{  }')) newPos -= 2;
+        
         inputRef.current?.setSelectionRange(newPos, newPos);
       }, 10);
     } else {
@@ -358,7 +393,6 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
     <div className="w-full h-full flex flex-col font-[VT323] relative z-10">
       
       {/* Scrollable Content */}
-      {/* ATTACH REF HERE FOR SCROLL CONTROL */}
       <div ref={containerRef} className="flex-1 overflow-y-auto custom-scrollbar p-4 pb-2">
         
         {/* Welcome Message */}
@@ -369,7 +403,7 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
             <p>{t.helpCmd}</p>
             <p>{t.symbolCmd}</p>
             <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>{t.navHint}</p>
-            <p className={`mt-2 text-yellow-500 animate-pulse`}>Try typing 'game' to learn!</p>
+            <p className={`mt-2 text-yellow-500 animate-pulse`}>Try typing 'matrix(3,3)' or 'game'!</p>
           </div>
         )}
 
@@ -396,7 +430,7 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
         <div className="h-4" />
       </div>
 
-      {/* Live Preview Panel (Fixed at bottom of terminal container) */}
+      {/* Live Preview Panel */}
       <LivePreview 
         latex={input} 
         onRobotClick={() => setShowHelpNav(true)} 

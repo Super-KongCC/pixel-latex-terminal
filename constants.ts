@@ -1,53 +1,7 @@
 
-
 import { LatexSymbol, TutorialLevel, Snippet } from './types';
 
 export const LATEX_SYMBOLS: LatexSymbol[] = [
-  {
-    category: "Greek",
-    items: [
-      { label: "α", code: "\\alpha" },
-      { label: "β", code: "\\beta" },
-      { label: "γ", code: "\\gamma" },
-      { label: "δ", code: "\\delta" },
-      { label: "θ", code: "\\theta" },
-      { label: "λ", code: "\\lambda" },
-      { label: "π", code: "\\pi" },
-      { label: "σ", code: "\\sigma" },
-      { label: "ω", code: "\\omega" },
-      { label: "Δ", code: "\\Delta" },
-      { label: "Σ", code: "\\Sigma" },
-      { label: "Ω", code: "\\Omega" },
-    ]
-  },
-  {
-    category: "Operators",
-    items: [
-      { label: "∑", code: "\\sum_{i=0}^{n}" },
-      { label: "∫", code: "\\int_{a}^{b}" },
-      { label: "∏", code: "\\prod" },
-      { label: "√", code: "\\sqrt{x}" },
-      { label: "lim", code: "\\lim_{x \\to 0}" },
-      { label: "∞", code: "\\infty" },
-      { label: "∂", code: "\\partial" },
-      { label: "∇", code: "\\nabla" },
-      { label: "±", code: "\\pm" },
-      { label: "×", code: "\\times" },
-    ]
-  },
-  {
-    category: "Relations",
-    items: [
-      { label: "≠", code: "\\neq" },
-      { label: "≤", code: "\\leq" },
-      { label: "≥", code: "\\geq" },
-      { label: "∈", code: "\\in" },
-      { label: "∉", code: "\\notin" },
-      { label: "⊂", code: "\\subset" },
-      { label: "≈", code: "\\approx" },
-      { label: "≡", code: "\\equiv" },
-    ]
-  },
   {
     category: "Structure",
     items: [
@@ -60,11 +14,103 @@ export const LATEX_SYMBOLS: LatexSymbol[] = [
     ]
   },
   {
+    category: "Calculus",
+    items: [
+      { label: "∫", code: "\\int" },
+      { label: "∫ab", code: "\\int_{a}^{b}" },
+      { label: "∮", code: "\\oint" },
+      { label: "∑", code: "\\sum_{i=0}^{n}" },
+      { label: "∏", code: "\\prod_{i=1}^{n}" },
+      { label: "lim", code: "\\lim_{x \\to \\infty}" },
+      { label: "∂", code: "\\partial" },
+      { label: "∇", code: "\\nabla" },
+      { label: "dx", code: "\\mathrm{d}x" },
+      { label: "Prime", code: "f'(x)" },
+    ]
+  },
+  {
+    category: "Greek",
+    items: [
+      { label: "α", code: "\\alpha" },
+      { label: "β", code: "\\beta" },
+      { label: "γ", code: "\\gamma" },
+      { label: "δ", code: "\\delta" },
+      { label: "ε", code: "\\epsilon" },
+      { label: "θ", code: "\\theta" },
+      { label: "λ", code: "\\lambda" },
+      { label: "μ", code: "\\mu" },
+      { label: "π", code: "\\pi" },
+      { label: "ρ", code: "\\rho" },
+      { label: "σ", code: "\\sigma" },
+      { label: "φ", code: "\\phi" },
+      { label: "ω", code: "\\omega" },
+      { label: "Δ", code: "\\Delta" },
+      { label: "Ω", code: "\\Omega" },
+    ]
+  },
+  {
+    category: "Operators",
+    items: [
+      { label: "±", code: "\\pm" },
+      { label: "×", code: "\\times" },
+      { label: "÷", code: "\\div" },
+      { label: "·", code: "\\cdot" },
+      { label: "√", code: "\\sqrt{x}" },
+      { label: "n√", code: "\\sqrt[n]{x}" },
+      { label: "∞", code: "\\infty" },
+      { label: "∘", code: "\\circ" },
+    ]
+  },
+  {
+    category: "Relations",
+    items: [
+      { label: "=", code: "=" },
+      { label: "≠", code: "\\neq" },
+      { label: "≈", code: "\\approx" },
+      { label: "≡", code: "\\equiv" },
+      { label: "≤", code: "\\leq" },
+      { label: "≥", code: "\\geq" },
+      { label: "≪", code: "\\ll" },
+      { label: "≫", code: "\\gg" },
+      { label: "∝", code: "\\propto" },
+    ]
+  },
+  {
+    category: "Logic & Sets",
+    items: [
+      { label: "∀", code: "\\forall" },
+      { label: "∃", code: "\\exists" },
+      { label: "∈", code: "\\in" },
+      { label: "∉", code: "\\notin" },
+      { label: "⊂", code: "\\subset" },
+      { label: "∪", code: "\\cup" },
+      { label: "∩", code: "\\cap" },
+      { label: "∅", code: "\\emptyset" },
+      { label: "⇒", code: "\\Rightarrow" },
+      { label: "⇔", code: "\\Leftrightarrow" },
+      { label: "∵", code: "\\because" },
+      { label: "∴", code: "\\therefore" },
+      { label: "ℝ", code: "\\mathbb{R}" },
+      { label: "ℤ", code: "\\mathbb{Z}" },
+    ]
+  },
+  {
+    category: "Arrows",
+    items: [
+      { label: "→", code: "\\rightarrow" },
+      { label: "←", code: "\\leftarrow" },
+      { label: "↔", code: "\\leftrightarrow" },
+      { label: "↑", code: "\\uparrow" },
+      { label: "↓", code: "\\downarrow" },
+      { label: "⟹", code: "\\Longrightarrow" },
+      { label: "↦", code: "\\mapsto" },
+    ]
+  },
+  {
     category: "Environments",
     items: [
       { label: "Eq (No #)", code: "\\begin{equation*}\n  E = mc^2\n\\end{equation*}" },
       { label: "Eq (Num)", code: "\\begin{equation}\n  E = mc^2\n\\end{equation}" },
-      { label: "Align", code: "\\begin{align}\n  x &= 2 \\\\\n  y &= 4\n\\end{align}" },
       { label: "Align*", code: "\\begin{align*}\n  x &= 2 \\\\\n  y &= 4\n\\end{align*}" },
       { label: "Cases", code: "\\begin{cases}\n  x & x > 0 \\\\\n  -x & x \\le 0\n\\end{cases}" },
       { label: "Matrix", code: "\\begin{bmatrix}\n  a & b \\\\\n  c & d\n\\end{bmatrix}" },
@@ -75,28 +121,16 @@ export const LATEX_SYMBOLS: LatexSymbol[] = [
 
 export const EDITOR_SNIPPETS: Snippet[] = [
   {
+    trigger: "\\beg", 
+    label: "Equation Env (Unnumbered)",
+    insert: "\\begin{equation*}\n  \n\\end{equation*}",
+    cursorOffset: -15
+  },
+  {
     trigger: "\\begin",
     label: "Equation Env",
     insert: "\\begin{equation}\n  \n\\end{equation}",
     cursorOffset: -14 
-  },
-  {
-    trigger: "\\beg", 
-    label: "Equation Env",
-    insert: "\\begin{equation}\n  \n\\end{equation}",
-    cursorOffset: -14
-  },
-  {
-    trigger: "\\begin{align}",
-    label: "Align Env",
-    insert: "\\begin{align}\n  \n\\end{align}",
-    cursorOffset: -12
-  },
-  {
-    trigger: "\\begin{align*}",
-    label: "Align* Env",
-    insert: "\\begin{align*}\n  \n\\end{align*}",
-    cursorOffset: -13
   },
   {
     trigger: "\\ali",
@@ -133,6 +167,36 @@ export const EDITOR_SNIPPETS: Snippet[] = [
     label: "Summation",
     insert: "\\sum_{}^{}",
     cursorOffset: -4
+  },
+  {
+    trigger: "\\part",
+    label: "Partial",
+    insert: "\\partial",
+    cursorOffset: 0
+  },
+  {
+    trigger: "\\inf",
+    label: "Infinity",
+    insert: "\\infty",
+    cursorOffset: 0
+  },
+  {
+    trigger: "\\to",
+    label: "Right Arrow",
+    insert: "\\rightarrow",
+    cursorOffset: 0
+  },
+  {
+    trigger: "\\arr",
+    label: "Right Arrow",
+    insert: "\\rightarrow",
+    cursorOffset: 0
+  },
+  {
+    trigger: "\\lam",
+    label: "Lambda",
+    insert: "\\lambda",
+    cursorOffset: 0
   }
 ];
 
@@ -252,7 +316,7 @@ export const GAME_TEXT = {
 
 export const UI_TEXT = {
   en: {
-    welcome: "PixelLatex Terminal [Version 1.0.3]",
+    welcome: "PixelLatex Terminal [Version 1.0.4]",
     lastLogin: "Last login",
     helpCmd: "Type -h for help",
     symbolCmd: "Type -hn for symbols",
@@ -276,7 +340,7 @@ export const UI_TEXT = {
     ]
   },
   zh: {
-    welcome: "PixelLatex 终端 [版本 1.0.3]",
+    welcome: "PixelLatex 终端 [版本 1.0.4]",
     lastLogin: "上次登录",
     helpCmd: "输入 -h 查看帮助",
     symbolCmd: "输入 -hn 查看符号表",
@@ -302,7 +366,7 @@ export const UI_TEXT = {
 };
 
 export const HELP_TEXT = `
-PIXEL LATEX TERMINAL v1.0.3
+PIXEL LATEX TERMINAL v1.0.4
 ===========================
 
 USAGE:
@@ -310,25 +374,26 @@ USAGE:
   Press [Shift + Enter] for a new line in the editor.
   
   [TAB] COMPLETION ENABLED:
-  Type \\beg then TAB -> equation environment
-  Type \\ali then TAB -> align environment
-  Type \\ali* then TAB -> align* (unnumbered)
-  Type \\mat then TAB -> matrix environment
+  \\beg [TAB] -> equation* (unnumbered)
+  \\begin [TAB] -> equation (numbered)
+  \\ali [TAB] -> align
+  \\part [TAB] -> \\partial
+  \\inf [TAB] -> \\infty
+  ...and many more.
 
 COMMANDS:
-  clear       Clear terminal history and reset numbering
-  game        Start LaTeX Tutorial Game Mode (Prof. Scott)
-  font <1-5>  Set terminal font size (1=small, 3=normal, 5=huge)
-  -h          Show this help message
-  -hn         Open symbol cheat sheet GUI
-  -download   Download the rendered formula as PNG
-  -copy       Copy the rendered formula to clipboard
+  clear          Clear terminal history
+  game           Start Tutorial Game
+  font <1-5>     Set font size
+  matrix(R,C)    Generate a matrix with R rows and C columns
+                 Example: matrix(2,2)
+  -h             Show this help
+  -hn            Open symbol GUI (Includes Matrix Tool)
+  -download      Download rendered formula
+  -copy          Copy rendered formula
 
 EXAMPLES:
   $ \\begin{align*} x &= 1 \\\\ y &= 2 \\end{align*}
+  $ matrix(3,3)
   $ \\int_{0}^{\\infty} e^{-x^2} dx -download
-
-TIPS:
-  - Use 'Align' for multi-line equations.
-  - Numbering resets per line in this terminal.
 `;
