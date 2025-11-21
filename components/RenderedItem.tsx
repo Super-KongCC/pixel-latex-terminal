@@ -11,15 +11,28 @@ interface RenderedItemProps {
   line: TerminalLine;
   theme: Theme;
   lang: Language;
+  fontSize: number;
 }
 
-const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang }) => {
+const getFontSizeClass = (size: number) => {
+    switch(size) {
+        case 1: return 'text-sm';
+        case 2: return 'text-base';
+        case 3: return 'text-xl';
+        case 4: return 'text-2xl';
+        case 5: return 'text-3xl';
+        default: return 'text-xl';
+    }
+};
+
+const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang, fontSize }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
 
   const t = UI_TEXT[lang];
+  const fontClass = getFontSizeClass(fontSize);
 
   // Function to handle automatic actions
   const performExport = async (action: 'download' | 'copy', manual: boolean = false) => {
@@ -85,7 +98,7 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang }) => {
   };
 
   useEffect(() => {
-    if (line.type === OutputType.LATEX && containerRef.current) {
+    if (line.type === OutputType.LATEX && containerRef.current && line.content) {
       try {
         if (!katex || typeof katex.renderToString !== 'function') {
             throw new Error("Latex Rendering Library not loaded.");
@@ -122,6 +135,15 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line.content, line.type]); // Re-run if content changes
 
+  // 1. HANDLE EMPTY CONTENT (Simulating Terminal New Line)
+  if (!line.content && !line.command && line.type !== OutputType.GAME) {
+      return (
+        <div className={`mb-1 font-bold font-mono ${theme === 'dark' ? 'text-green-500' : 'text-green-700'} ${fontClass}`}>
+          ➜ ~ $
+        </div>
+      );
+  }
+
 
   if (line.type === OutputType.TEXT || line.type === OutputType.ERROR || line.type === OutputType.HELP) {
     const textColor = line.type === OutputType.ERROR 
@@ -129,7 +151,7 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang }) => {
         : (theme === 'dark' ? 'text-green-400' : 'text-green-700');
 
     return (
-      <div className={`mb-2 whitespace-pre-wrap font-mono break-words max-w-full ${textColor}`}>
+      <div className={`mb-2 whitespace-pre-wrap font-mono break-words max-w-full ${textColor} ${fontClass}`}>
         {line.content}
       </div>
     );
@@ -137,7 +159,7 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang }) => {
 
   if (line.type === OutputType.GAME) {
     return (
-      <div className={`mb-4 p-4 border-l-4 rounded font-mono whitespace-pre-wrap break-words max-w-full leading-relaxed
+      <div className={`mb-4 p-4 border-l-4 rounded font-mono whitespace-pre-wrap break-words max-w-full leading-relaxed ${fontClass}
         ${theme === 'dark' 
            ? 'bg-yellow-900/10 border-yellow-500 text-yellow-100 shadow-[0_0_15px_rgba(234,179,8,0.1)]' 
            : 'bg-yellow-50 border-yellow-600 text-yellow-900 shadow-sm'}`}>
@@ -163,18 +185,21 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang }) => {
       </div>
       
       {/* FIXED: Changed to w-full and removed inline-block/nowrap to prevent tag overlap */}
-      <div 
-        ref={contentRef}
-        className={`w-full block p-6 border rounded overflow-x-auto custom-scrollbar
-           ${theme === 'dark' 
-             ? 'border-gray-800 bg-gray-950 text-white/90' 
-             : 'border-gray-300 bg-white text-black'}`}
-      >
-        {/* Wrapper div for katex injection. Removed whitespace-nowrap */}
-        <div ref={containerRef} className="text-xl md:text-2xl antialiased selection:bg-green-500/30" />
-      </div>
+      {line.content && (
+        <div 
+            ref={contentRef}
+            className={`w-full block p-6 border rounded overflow-x-auto custom-scrollbar
+            ${theme === 'dark' 
+                ? 'border-gray-800 bg-gray-950 text-white/90' 
+                : 'border-gray-300 bg-white text-black'}`}
+        >
+            {/* Wrapper div for katex injection. Removed whitespace-nowrap */}
+            <div ref={containerRef} className={`antialiased selection:bg-green-500/30 ${fontClass}`} />
+        </div>
+      )}
 
       {/* Action Buttons */}
+      {line.content && (
       <div className="mt-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
          <button 
            onClick={() => performExport('copy', true)}
@@ -195,6 +220,7 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang }) => {
             [{t.download}]
          </button>
       </div>
+      )}
     </div>
   );
 };

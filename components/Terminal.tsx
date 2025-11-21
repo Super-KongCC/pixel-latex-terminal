@@ -16,6 +16,9 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   
+  // Font size state: 1 (xs), 2 (sm), 3 (xl/normal), 4 (2xl), 5 (3xl)
+  const [fontSize, setFontSize] = useState<number>(3);
+  
   const [input, setInput] = useState('');
   const [showHelpNav, setShowHelpNav] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -170,11 +173,10 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
 
 
   const processCommand = async () => {
-    if (!input.trim()) return;
-
-    const currentInput = input;
+    // ALLOW empty inputs to act like "Enter" in a terminal
+    const currentInput = input; // Do not trim immediately to detect whitespace
     
-    // Add to command history
+    // Add to command history only if not empty
     if (currentInput.trim()) {
       setCommandHistory(prev => [...prev, currentInput]);
       setHistoryIndex(null); 
@@ -184,12 +186,13 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
     // GAME MODE INTERCEPTION
     // ---------------------------
     if (gameMode) {
+        if (!currentInput.trim()) return; // Ignore empty enter in game mode
         handleGameInput(currentInput);
         return;
     }
 
     const parsed = parseInput(currentInput);
-    const newLineId = Date.now().toString();
+    const newLineId = Date.now().toString() + Math.random();
 
     // 0. Handle Clear
     if (parsed.content.toLowerCase() === 'clear' || parsed.content.toLowerCase() === 'cls') {
@@ -198,7 +201,31 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
       return;
     }
 
-    // 0.1 Handle Game Start
+    // 0.1 Handle Font Size Command
+    // Regex matches: font 1, font <1>, font=1, font<1>, case insensitive
+    // Groups: 1=size
+    const fontMatch = parsed.content.match(/^font\s*[=<]?\s*(\d+)\s*[>]?$/i);
+    
+    if (fontMatch) {
+        const size = parseInt(fontMatch[1]);
+        if (!isNaN(size) && size >= 1 && size <= 5) {
+            setFontSize(size);
+            pushMsg(`Font size set to ${size}`, OutputType.TEXT);
+            setInput('');
+            return;
+        } else {
+            pushMsg(`Invalid font size. Use 1-5.`, OutputType.ERROR);
+            setInput('');
+            return;
+        }
+    } else if (parsed.content.toLowerCase().startsWith('font ')) {
+        // If it starts with "font " but didn't match the regex, it might be invalid syntax
+        pushMsg(`Usage: font <1-5>`, OutputType.ERROR);
+        setInput('');
+        return;
+    }
+
+    // 0.2 Handle Game Start
     if (parsed.content.toLowerCase() === 'game') {
         setInput('');
         startGame();
@@ -223,6 +250,20 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
       setShowHelpNav(true);
       setInput(''); 
       return;
+    }
+
+    // 3. Handle Empty Input (Just New Line)
+    // Moved AFTER help checks because commands like "-h" result in empty content.
+    if (!parsed.content) {
+        setHistory(prev => [...prev, {
+            id: newLineId,
+            type: OutputType.TEXT,
+            content: "", // Empty content triggers "Empty Line" rendering
+            command: "", // No command
+            timestamp: Date.now()
+        }]);
+        setInput('');
+        return;
     }
 
     setIsProcessing(true);
@@ -333,14 +374,14 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
         )}
 
         {/* History */}
-        <div className="flex flex-col text-xl">
+        <div className="flex flex-col">
           {history.map(line => (
-            <RenderedItem key={line.id} line={line} theme={theme} lang={lang} />
+            <RenderedItem key={line.id} line={line} theme={theme} lang={lang} fontSize={fontSize} />
           ))}
         </div>
 
         {/* Input */}
-        <div className="text-xl">
+        <div className="">
             <TerminalInput 
               value={input}
               onChange={setInput}
@@ -348,6 +389,7 @@ const Terminal: React.FC<TerminalProps> = ({ theme, lang }) => {
               onHistoryNav={handleHistoryNav}
               inputRef={inputRef}
               theme={theme}
+              fontSize={fontSize}
             />
         </div>
 

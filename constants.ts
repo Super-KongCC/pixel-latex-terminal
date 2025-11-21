@@ -1,5 +1,6 @@
 
-import { LatexSymbol, TutorialLevel } from './types';
+
+import { LatexSymbol, TutorialLevel, Snippet } from './types';
 
 export const LATEX_SYMBOLS: LatexSymbol[] = [
   {
@@ -64,10 +65,74 @@ export const LATEX_SYMBOLS: LatexSymbol[] = [
       { label: "Eq (No #)", code: "\\begin{equation*}\n  E = mc^2\n\\end{equation*}" },
       { label: "Eq (Num)", code: "\\begin{equation}\n  E = mc^2\n\\end{equation}" },
       { label: "Align", code: "\\begin{align}\n  x &= 2 \\\\\n  y &= 4\n\\end{align}" },
+      { label: "Align*", code: "\\begin{align*}\n  x &= 2 \\\\\n  y &= 4\n\\end{align*}" },
       { label: "Cases", code: "\\begin{cases}\n  x & x > 0 \\\\\n  -x & x \\le 0\n\\end{cases}" },
       { label: "Matrix", code: "\\begin{bmatrix}\n  a & b \\\\\n  c & d\n\\end{bmatrix}" },
       { label: "Gather", code: "\\begin{gather}\n  a = b \\\\\n  c = d\n\\end{gather}" },
     ]
+  }
+];
+
+export const EDITOR_SNIPPETS: Snippet[] = [
+  {
+    trigger: "\\begin",
+    label: "Equation Env",
+    insert: "\\begin{equation}\n  \n\\end{equation}",
+    cursorOffset: -14 
+  },
+  {
+    trigger: "\\beg", 
+    label: "Equation Env",
+    insert: "\\begin{equation}\n  \n\\end{equation}",
+    cursorOffset: -14
+  },
+  {
+    trigger: "\\begin{align}",
+    label: "Align Env",
+    insert: "\\begin{align}\n  \n\\end{align}",
+    cursorOffset: -12
+  },
+  {
+    trigger: "\\begin{align*}",
+    label: "Align* Env",
+    insert: "\\begin{align*}\n  \n\\end{align*}",
+    cursorOffset: -13
+  },
+  {
+    trigger: "\\ali",
+    label: "Align Env",
+    insert: "\\begin{align}\n  \n\\end{align}",
+    cursorOffset: -12
+  },
+  {
+    trigger: "\\ali*",
+    label: "Align* Env",
+    insert: "\\begin{align*}\n  \n\\end{align*}",
+    cursorOffset: -13
+  },
+  {
+    trigger: "\\mat",
+    label: "Matrix",
+    insert: "\\begin{bmatrix}\n  \n\\end{bmatrix}",
+    cursorOffset: -14
+  },
+  {
+    trigger: "\\cas",
+    label: "Cases",
+    insert: "\\begin{cases}\n  \n\\end{cases}",
+    cursorOffset: -12
+  },
+  {
+    trigger: "\\frac",
+    label: "Fraction",
+    insert: "\\frac{}{}",
+    cursorOffset: -3
+  },
+  {
+    trigger: "\\sum",
+    label: "Summation",
+    insert: "\\sum_{}^{}",
+    cursorOffset: -4
   }
 ];
 
@@ -243,17 +308,24 @@ PIXEL LATEX TERMINAL v1.0.3
 USAGE:
   Type LaTeX syntax and press [Enter] to render.
   Press [Shift + Enter] for a new line in the editor.
+  
+  [TAB] COMPLETION ENABLED:
+  Type \\beg then TAB -> equation environment
+  Type \\ali then TAB -> align environment
+  Type \\ali* then TAB -> align* (unnumbered)
+  Type \\mat then TAB -> matrix environment
 
 COMMANDS:
   clear       Clear terminal history and reset numbering
   game        Start LaTeX Tutorial Game Mode (Prof. Scott)
+  font <1-5>  Set terminal font size (1=small, 3=normal, 5=huge)
   -h          Show this help message
   -hn         Open symbol cheat sheet GUI
   -download   Download the rendered formula as PNG
   -copy       Copy the rendered formula to clipboard
 
 EXAMPLES:
-  $ \\begin{align} x &= 1 \\\\ y &= 2 \\end{align}
+  $ \\begin{align*} x &= 1 \\\\ y &= 2 \\end{align*}
   $ \\int_{0}^{\\infty} e^{-x^2} dx -download
 
 TIPS:

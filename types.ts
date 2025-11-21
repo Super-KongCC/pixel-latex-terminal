@@ -1,4 +1,5 @@
 
+
 export enum OutputType {
   LATEX = 'LATEX',
   TEXT = 'TEXT',
@@ -48,6 +49,13 @@ export interface TutorialLevel {
   expected: string[]; // Possible correct answers
   hintEn: string;
   hintZh: string;
+}
+
+export interface Snippet {
+  trigger: string; // text to type, e.g. "\beg"
+  label: string; // description
+  insert: string; // full content
+  cursorOffset?: number; // where to place cursor relative to end (negative value) or absolute
 }
 
 export type Theme = 'dark' | 'light';

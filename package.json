@@ -1,24 +1,25 @@
 {
-  "name": "pixellatex-terminal",
+  "name": "pixel-latex-terminal",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "react-dom": "^19.2.0",
-    "react": "^19.2.0",
-    "@google/genai": "^1.30.0",
-    "katex": "^0.16.25",
-    "html-to-image": "^1.11.13"
+    "html-to-image": "^1.11.13",
+    "katex": "^0.16.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/katex": "^0.16.7",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.4"
   }
 }
