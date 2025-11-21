@@ -1,9 +1,3 @@
-<div align="right">
-<a href="#english-version">English</a> | <a href="#中文版本">中文</a>
-</div>
-
----
-
 # <div id="english-version"></div> 📟 Pixel-Terminal LaTeX Renderer
 
 A retro **pixel-style terminal** that renders LaTeX formulas interactively.  
