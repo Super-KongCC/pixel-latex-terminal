@@ -30,16 +30,12 @@ Vintage CRT terminal aesthetics.
 
 ### ✔️ GUI Preset Selector  
 Click the Scott robot or run `-hn` to open the graphical menu with:
-- Calculus templates  
-- Fractions & radicals  
-- Probability formulas  
-- Linear algebra  
-- Custom modules  
+
 
 ### ✔️ Game Mode  
 A simple interactive tutorial for LaTeX beginners.
+<img width="1683" height="1131" alt="image" src="https://github.com/user-attachments/assets/153213c3-aa7f-42e4-bfe3-f8e34738e7a6" />
 
----
 
 ## 🧪 Example
 
