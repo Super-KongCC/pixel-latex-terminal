@@ -3,6 +3,7 @@
 A retro **pixel-style terminal** that renders LaTeX formulas interactively.  
 Type LaTeX code in the terminal, and it instantly generates a rendered formula image — downloadable or copyable.
 
+[Website of pixel-latex-terminal](https://pixel-math-terminal.vercel.app/)
 ---
 
 ## 🚀 Features
