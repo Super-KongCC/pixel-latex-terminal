@@ -27,223 +27,232 @@ const getFontSizeClass = (size: number) => {
 
 const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang, fontSize }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [statusMsg, setStatusMsg] = useState('');
+  const [isHovered, setIsHovered] = useState(false);
+  const [actionStatus, setActionStatus] = useState<'idle' | 'copied' | 'saved'>('idle');
+  
+  // Handle auto-download or copy if flags are set
+  useEffect(() => {
+      if (line.flags?.download) {
+         setTimeout(() => handleDownload(), 500);
+      }
+      if (line.flags?.copy) {
+         setTimeout(() => handleCopy(), 500);
+      }
+  }, [line.flags]);
 
-  const t = UI_TEXT[lang];
-  const fontClass = getFontSizeClass(fontSize);
-
-  // Function to handle automatic actions
-  const performExport = async (action: 'download' | 'copy', manual: boolean = false) => {
-    if (!contentRef.current) return;
-
-    // Check for Secure Context immediately for Copy action
-    if (action === 'copy') {
-        if (!navigator.clipboard || !navigator.clipboard.write) {
-            if (manual) {
-                console.error("Clipboard API unavailable. Context must be Secure (HTTPS) or Localhost.");
-                setStatus('error');
-                setStatusMsg(lang === 'zh' ? '需HTTPS环境' : 'HTTPS Required');
-            }
-            return;
-        }
-    }
-    
-    const element = contentRef.current;
-    setStatus('idle');
-
-    // Theme-based colors for export
-    const isDark = theme === 'dark';
-    const exportBg = isDark ? '#000000' : '#ffffff';
-    const exportColor = isDark ? 'white' : 'black';
-
+  const handleDownload = async () => {
+    if (!containerRef.current) return;
     try {
-      const options = {
-         backgroundColor: exportBg, 
-         pixelRatio: 2, 
-         style: { 
-             color: exportColor,
-             // Ensure we capture the full width of the rendered formula
-             width: element.scrollWidth ? `${element.scrollWidth}px` : 'auto', 
-             height: element.offsetHeight ? `${element.offsetHeight}px` : 'auto',
-         }, 
-         skipAutoScale: true, 
-         cacheBust: true, 
-      };
-
-      if (action === 'download') {
-        const dataUrl = await toPng(element, options);
+        // Wait a bit to ensure rendering is complete/fonts loaded
+        const dataUrl = await toPng(containerRef.current, { 
+            cacheBust: true, 
+            backgroundColor: theme === 'dark' ? '#000000' : '#ffffff',
+            style: { margin: '0', boxSizing: 'border-box' }, // Reset style override, rely on element padding
+            pixelRatio: 4 // Increased to 4 for high resolution
+        });
         const link = document.createElement('a');
-        link.download = `latex-pixel-${line.id.slice(0, 6)}.png`;
+        link.download = `latex-${Date.now()}.png`;
         link.href = dataUrl;
         link.click();
-        if (manual) {
-            setStatus('success');
-            setStatusMsg(lang === 'zh' ? '已下载!' : 'Downloaded!');
-            setTimeout(() => setStatus('idle'), 2000);
-        }
-      } else if (action === 'copy') {
-         // Using toBlob ensures we get a binary representation directly
-         const blob = await toBlob(element, options);
-         
-         if (!blob) {
-             throw new Error("Image generation failed (empty blob).");
-         }
-
-         try {
-            const clipboardItem = new ClipboardItem({ 'image/png': blob });
-            await navigator.clipboard.write([clipboardItem]);
-            
-            setStatus('success');
-            setStatusMsg(lang === 'zh' ? '已复制!' : 'Copied!');
-            setTimeout(() => setStatus('idle'), 2000);
-         } catch (clipboardError: any) {
-            console.error("Clipboard write failed", clipboardError);
-            if (manual) {
-                // Distinguish between permission error and other errors
-                if (clipboardError.name === 'NotAllowedError' || clipboardError.message?.includes('NotAllowed')) {
-                     setStatus('error');
-                     setStatusMsg(lang === 'zh' ? '权限被拒绝' : 'Permission Denied');
-                } else {
-                     setStatus('error');
-                     setStatusMsg(lang === 'zh' ? '复制失败' : 'Copy Failed');
-                }
-            }
-         }
-      }
+        
+        setActionStatus('saved');
+        setTimeout(() => setActionStatus('idle'), 2000);
     } catch (err) {
-      console.error("Export failed", err);
-      setStatus('error');
-      setStatusMsg(lang === 'zh' ? '导出错误' : 'Export Error');
+        console.error("Download failed", err);
     }
   };
 
-  useEffect(() => {
-    if (line.type === OutputType.LATEX && containerRef.current && line.content) {
-      try {
-        if (!katex || typeof katex.renderToString !== 'function') {
-            throw new Error("Latex Rendering Library not loaded.");
-        }
+  const handleCopy = async () => {
+     if (!containerRef.current) return;
+     try {
+         const blob = await toBlob(containerRef.current, { 
+             cacheBust: true, 
+             backgroundColor: theme === 'dark' ? '#000000' : '#ffffff',
+             style: { margin: '0', boxSizing: 'border-box' },
+             pixelRatio: 4 // Increased to 4 for high resolution
+         });
+         if (blob) {
+             await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+             console.log('Copied to clipboard');
+             setActionStatus('copied');
+             setTimeout(() => setActionStatus('idle'), 2000);
+         }
+     } catch (err) {
+         console.error("Copy failed", err);
+     }
+  };
 
-        const html = katex.renderToString(line.content, {
-          throwOnError: true, 
-          displayMode: true,
-          output: 'html',
-          strict: false,
-          trust: true
-        });
-        
-        containerRef.current.innerHTML = html;
+  const fontClass = getFontSizeClass(fontSize);
 
-        if (line.flags?.download) {
-            setTimeout(() => performExport('download', false), 500);
-        }
-        if (line.flags?.copy) {
-            setTimeout(() => performExport('copy', false), 500);
-        }
+  const renderContent = () => {
+      switch (line.type) {
+          case OutputType.LATEX:
+              try {
+                  // Detect display mode
+                  const html = katex.renderToString(line.content, {
+                      throwOnError: false,
+                      displayMode: true,
+                      globalGroup: true
+                  });
+                  return (
+                      <div className="w-full overflow-x-auto">
+                          <div 
+                            ref={containerRef} 
+                            // Added py-4 px-4 to ensure content (like integrals) isn't clipped at edges
+                            className={`inline-block min-w-full px-4 py-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}
+                            dangerouslySetInnerHTML={{ __html: html }}
+                          />
+                      </div>
+                  );
+              } catch (e) {
+                  return <div className="text-red-500 font-mono">Invalid LaTeX</div>;
+              }
+              
+          case OutputType.TEXT:
+               return (
+                 <div className={`whitespace-pre-wrap break-words leading-relaxed font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'} ${fontClass}`}>
+                    {line.content || <span className="opacity-30 italic">&lt;empty&gt;</span>}
+                 </div>
+               );
 
-      } catch (e: any) {
-        console.error("Latex Render Error:", e);
-        const errorMsg = e.message || "Unknown Render Error";
-        containerRef.current.innerHTML = `
-          <div class="inline-block text-left p-2 bg-red-900/20 border border-red-500/50 rounded">
-             <div class="text-red-400 font-bold text-xs mb-1">RENDER ERROR</div>
-             <div class="text-red-300 font-mono text-sm whitespace-pre-wrap break-all max-w-lg">${errorMsg}</div>
-          </div>
-        `;
+          case OutputType.ERROR:
+              return (
+                  <div className={`text-red-500 whitespace-pre-wrap font-mono font-bold ${fontClass}`}>
+                      {line.content}
+                  </div>
+              );
+              
+          case OutputType.HELP:
+              return (
+                  <div className={`whitespace-pre-wrap font-mono text-sm opacity-90 leading-tight p-3 border-l-4 my-2
+                    ${theme === 'dark' ? 'border-green-600 bg-green-900/10 text-green-400' : 'border-green-600 bg-green-50 text-green-800'}`}>
+                      {line.content}
+                  </div>
+              );
+
+          case OutputType.GAME:
+              return (
+                  <div className={`whitespace-pre-wrap border-2 p-4 my-2 rounded relative overflow-hidden font-mono
+                    ${theme === 'dark' ? 'border-amber-600 bg-amber-900/10 text-amber-400' : 'border-amber-500 bg-amber-50 text-amber-800'}`}>
+                      <div className="absolute top-2 right-2 opacity-50 text-2xl animate-bounce">
+                         👨‍🏫
+                      </div>
+                      <div className={`font-bold mb-2 border-b border-current pb-1 inline-block ${fontClass}`}>PROFESSOR SCOTT:</div>
+                      <div className={`mt-1 ${fontClass} leading-relaxed`}>{line.content}</div>
+                  </div>
+              );
+
+          default:
+              return <div>{line.content}</div>;
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [line.content, line.type]); // Re-run if content changes
+  };
 
-  // 1. HANDLE EMPTY CONTENT (Simulating Terminal New Line)
-  if (!line.content && !line.command && line.type !== OutputType.GAME) {
-      return (
-        <div className={`mb-1 font-bold font-mono ${theme === 'dark' ? 'text-green-500' : 'text-green-700'} ${fontClass}`}>
-          ➜ ~ $
-        </div>
-      );
-  }
-
-
-  if (line.type === OutputType.TEXT || line.type === OutputType.ERROR || line.type === OutputType.HELP) {
-    const textColor = line.type === OutputType.ERROR 
-        ? (theme === 'dark' ? 'text-red-400' : 'text-red-600') 
-        : (theme === 'dark' ? 'text-green-400' : 'text-green-700');
-
-    return (
-      <div className={`mb-2 whitespace-pre-wrap font-mono break-words max-w-full ${textColor} ${fontClass}`}>
-        {line.content}
-      </div>
-    );
-  }
-
-  if (line.type === OutputType.GAME) {
-    return (
-      <div className={`mb-4 p-4 border-l-4 rounded font-mono whitespace-pre-wrap break-words max-w-full leading-relaxed ${fontClass}
-        ${theme === 'dark' 
-           ? 'bg-yellow-900/10 border-yellow-500 text-yellow-100 shadow-[0_0_15px_rgba(234,179,8,0.1)]' 
-           : 'bg-yellow-50 border-yellow-600 text-yellow-900 shadow-sm'}`}>
-        <div className="flex items-center gap-2 mb-2 font-bold opacity-90 text-sm uppercase tracking-wider border-b pb-1 border-yellow-500/30">
-           <span className="text-xl">🎓</span> PROF. SCOTT
-        </div>
-        <div>{line.content}</div>
-      </div>
-    );
-  }
+  const timeString = new Date(line.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
-    <div className="mb-6 group relative">
-      <div className={`flex justify-between items-end mb-1 pr-2 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
-          <div className="text-xs font-mono select-none">
-            {`> ${line.command || 'Generated Output'}`}
-          </div>
-          {status !== 'idle' && (
-              <div className={`text-[10px] font-bold font-mono animate-pulse ${status === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-                  [{statusMsg}]
+      <div 
+        className="group w-full mb-4 relative animate-in fade-in duration-300"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+          {/* Meta Header */}
+          {line.command && (
+              <div className={`flex items-center gap-2 text-xs mb-1 font-mono select-none ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
+                  <span className={`font-bold ${theme === 'dark' ? 'text-green-600' : 'text-green-600'}`}>➜</span>
+                  <span className="opacity-70">{line.command}</span>
+                  <span className="ml-auto opacity-50">[{timeString}]</span>
               </div>
           )}
-      </div>
-      
-      {/* FIXED: Changed to w-full and removed inline-block/nowrap to prevent tag overlap */}
-      {line.content && (
-        <div 
-            ref={contentRef}
-            className={`w-full block p-6 border rounded overflow-x-auto custom-scrollbar
-            ${theme === 'dark' 
-                ? 'border-gray-800 bg-gray-950 text-white/90' 
-                : 'border-gray-300 bg-white text-black'}`}
-        >
-            {/* Wrapper div for katex injection. Removed whitespace-nowrap */}
-            <div ref={containerRef} className={`antialiased selection:bg-green-500/30 ${fontClass}`} />
-        </div>
-      )}
+          
+          {/* Content */}
+          <div className="relative pl-4 border-l border-transparent hover:border-gray-700 transition-colors">
+              {renderContent()}
+              
+              {/* Action Buttons */}
+              {(line.type === OutputType.LATEX) && (
+                  <div className={`absolute right-0 -top-8 sm:top-0 flex flex-col items-end gap-1 transition-all duration-300 z-10
+                    ${isHovered || actionStatus !== 'idle' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
+                      
+                      <div className="flex gap-2">
+                        {/* COPY BUTTON */}
+                        <button 
+                            onClick={handleCopy}
+                            disabled={actionStatus !== 'idle'}
+                            className={`
+                                group/btn
+                                relative overflow-hidden
+                                px-2 py-1.5 text-xs font-bold border rounded flex items-center gap-1 shadow-lg backdrop-blur-md
+                                transition-all duration-300 ease-out
+                                hover:scale-105 active:scale-90
+                                ${actionStatus === 'copied'
+                                    ? 'bg-green-500 border-green-400 text-black scale-105 shadow-green-500/50'
+                                    : theme === 'dark'
+                                        ? 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-green-500 hover:text-white'
+                                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-green-500 hover:text-black'
+                                }
+                            `}
+                            title={UI_TEXT[lang].copy}
+                        >
+                            {/* Animated Check Icon */}
+                            {actionStatus === 'copied' ? (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="animate-in zoom-in duration-200">
+                                    <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            ) : (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-70 group-hover/btn:opacity-100">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            )}
+                            <span>{actionStatus === 'copied' ? (lang === 'zh' ? '成功' : 'OK') : 'COPY'}</span>
+                        </button>
 
-      {/* Action Buttons */}
-      {line.content && (
-      <div className="mt-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-         <button 
-           onClick={() => performExport('copy', true)}
-           className={`text-xs px-2 py-1 rounded font-mono border transition-colors
-             ${theme === 'dark' 
-               ? 'bg-gray-800 text-green-500 hover:bg-green-900 border-green-900' 
-               : 'bg-gray-100 text-green-700 hover:bg-green-200 border-green-200'}`}
-         >
-            [{t.copy}]
-         </button>
-         <button 
-           onClick={() => performExport('download', true)}
-           className={`text-xs px-2 py-1 rounded font-mono border transition-colors
-             ${theme === 'dark' 
-               ? 'bg-gray-800 text-blue-400 hover:bg-blue-900 border-blue-900' 
-               : 'bg-gray-100 text-blue-700 hover:bg-blue-200 border-blue-200'}`}
-         >
-            [{t.download}]
-         </button>
+                        {/* DOWNLOAD BUTTON */}
+                        <button 
+                            onClick={handleDownload}
+                            disabled={actionStatus !== 'idle'}
+                            className={`
+                                group/btn
+                                relative overflow-hidden
+                                px-2 py-1.5 text-xs font-bold border rounded flex items-center gap-1 shadow-lg backdrop-blur-md
+                                transition-all duration-300 ease-out
+                                hover:scale-105 active:scale-90
+                                ${actionStatus === 'saved'
+                                    ? 'bg-green-500 border-green-400 text-black scale-105 shadow-green-500/50'
+                                    : theme === 'dark'
+                                        ? 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-green-500 hover:text-white'
+                                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-green-500 hover:text-black'
+                                }
+                            `}
+                            title={UI_TEXT[lang].download}
+                        >
+                            {actionStatus === 'saved' ? (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="animate-in zoom-in duration-200">
+                                    <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            ) : (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-70 group-hover/btn:opacity-100">
+                                    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            )}
+                            <span>{actionStatus === 'saved' ? (lang === 'zh' ? '成功' : 'OK') : 'SAVE'}</span>
+                        </button>
+                      </div>
+                      
+                      {/* Text Feedback (Below buttons) */}
+                      <div className={`text-[10px] font-mono px-1 py-0.5 transition-all duration-300
+                             ${actionStatus !== 'idle' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}
+                             ${theme === 'dark' ? 'text-green-400' : 'text-green-700'}`}>
+                             {actionStatus === 'copied' 
+                                ? (lang === 'zh' ? '图片已复制到剪贴板' : 'Image copied to clipboard') 
+                                : (actionStatus === 'saved' ? (lang === 'zh' ? '图片已保存' : 'Image downloaded') : '')}
+                      </div>
+                  </div>
+              )}
+          </div>
       </div>
-      )}
-    </div>
   );
 };
 

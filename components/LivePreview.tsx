@@ -239,7 +239,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({ latex, onRobotClick, theme, l
             {moodOverride === 'TEACHER' && <span className="text-amber-500 font-bold">● TEACHING MODE</span>}
         </div>
         {/* CHANGED: Added whitespace-pre-wrap and break-words to ensure long text wraps properly */}
-        <div className={`border rounded px-4 py-2 overflow-x-auto custom-scrollbar min-h-[44px] transition-colors whitespace-pre-wrap break-words
+        <div className={`border rounded px-4 py-4 overflow-x-auto custom-scrollbar min-h-[44px] transition-colors whitespace-pre-wrap break-words
             ${theme === 'dark' 
                 ? (mood === 'CONFUSED' ? 'bg-black/50 border-red-900/50' : 'bg-black/50 border-gray-700') 
                 : (mood === 'CONFUSED' ? 'bg-gray-50 border-red-300' : 'bg-gray-50 border-gray-300')

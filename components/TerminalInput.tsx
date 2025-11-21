@@ -90,14 +90,15 @@ const TerminalInput: React.FC<TerminalInputProps> = ({ value, onChange, onSubmit
     
     // 3. History Nav
     else if (e.key === 'ArrowUp') {
-      // Only nav history if cursor is at the top line or beginning? 
-      // For terminal simplicity, usually Up Arrow always goes to history unless multiline editing.
-      // Here we keep it simple: Up Arrow always triggers history if we are on first line (implied) or just standard behavior.
-      // To allow multiline editing navigation, strictly we should check cursor pos.
-      // But let's keep the existing props behavior:
+      // Disable history nav if multiline to allow cursor movement
+      if (value.includes('\n')) return;
+      
       e.preventDefault();
       onHistoryNav('up');
     } else if (e.key === 'ArrowDown') {
+      // Disable history nav if multiline to allow cursor movement
+      if (value.includes('\n')) return;
+      
       e.preventDefault();
       onHistoryNav('down');
     }
