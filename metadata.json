@@ -1,0 +1,5 @@
+{
+  "name": "PixelLatex Terminal",
+  "description": "A retro Mac-style terminal for editing, rendering, and exporting LaTeX formulas with AI assistance.",
+  "requestFramePermissions": []
+}
