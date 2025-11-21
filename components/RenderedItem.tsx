@@ -37,6 +37,18 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang, fontSize
   // Function to handle automatic actions
   const performExport = async (action: 'download' | 'copy', manual: boolean = false) => {
     if (!contentRef.current) return;
+
+    // Check for Secure Context immediately for Copy action
+    if (action === 'copy') {
+        if (!navigator.clipboard || !navigator.clipboard.write) {
+            if (manual) {
+                console.error("Clipboard API unavailable. Context must be Secure (HTTPS) or Localhost.");
+                setStatus('error');
+                setStatusMsg(lang === 'zh' ? '需HTTPS环境' : 'HTTPS Required');
+            }
+            return;
+        }
+    }
     
     const element = contentRef.current;
     setStatus('idle');
@@ -72,20 +84,30 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang, fontSize
             setTimeout(() => setStatus('idle'), 2000);
         }
       } else if (action === 'copy') {
+         // Using toBlob ensures we get a binary representation directly
          const blob = await toBlob(element, options);
-         if (blob) {
-            try {
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': blob })
-                ]);
-                setStatus('success');
-                setStatusMsg(lang === 'zh' ? '已复制!' : 'Copied!');
-                setTimeout(() => setStatus('idle'), 2000);
-            } catch (clipboardError) {
-                if (manual) {
-                    console.error("Clipboard write failed", clipboardError);
-                    setStatus('error');
-                    setStatusMsg('Access Denied');
+         
+         if (!blob) {
+             throw new Error("Image generation failed (empty blob).");
+         }
+
+         try {
+            const clipboardItem = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([clipboardItem]);
+            
+            setStatus('success');
+            setStatusMsg(lang === 'zh' ? '已复制!' : 'Copied!');
+            setTimeout(() => setStatus('idle'), 2000);
+         } catch (clipboardError: any) {
+            console.error("Clipboard write failed", clipboardError);
+            if (manual) {
+                // Distinguish between permission error and other errors
+                if (clipboardError.name === 'NotAllowedError' || clipboardError.message?.includes('NotAllowed')) {
+                     setStatus('error');
+                     setStatusMsg(lang === 'zh' ? '权限被拒绝' : 'Permission Denied');
+                } else {
+                     setStatus('error');
+                     setStatusMsg(lang === 'zh' ? '复制失败' : 'Copy Failed');
                 }
             }
          }
@@ -93,7 +115,7 @@ const RenderedItem: React.FC<RenderedItemProps> = ({ line, theme, lang, fontSize
     } catch (err) {
       console.error("Export failed", err);
       setStatus('error');
-      setStatusMsg('Export Failed');
+      setStatusMsg(lang === 'zh' ? '导出错误' : 'Export Error');
     }
   };
 
